@@ -130,6 +130,13 @@
       align-items: start;
     }
 
+    .desktop-intro,
+    .desktop-score,
+    .desktop-legend,
+    .desktop-fallback-tabs {
+      display: none;
+    }
+
     .field-panel,
     .side-panel,
     .rules-section {
@@ -381,6 +388,13 @@
       padding: 14px;
       position: sticky;
       top: 14px;
+    }
+
+    .desktop-actions {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
     }
 
     .panel-title {
@@ -654,25 +668,85 @@
     }
 
     @media (min-width: 1041px) {
+      .page {
+        max-width: min(1500px, calc(100vw - 44px));
+        padding: 14px 22px;
+      }
+
+      .mobile-topbar,
+      .mobile-tabs,
+      .field-panel > .score-strip,
+      .field-panel > .legend {
+        display: none;
+      }
+
       .game {
+        grid-template-columns: minmax(520px, 1fr) minmax(430px, 500px);
         align-items: stretch;
-        min-height: clamp(760px, calc(100vh - 120px), 1100px);
+        min-height: calc(100svh - 28px);
       }
 
       .field-panel {
         display: flex;
         flex-direction: column;
-        height: clamp(760px, calc(100vh - 120px), 1100px);
+        height: calc(100svh - 28px);
+        min-height: 680px;
       }
 
       .field-wrap {
         flex: 1;
         min-height: 0;
+        padding: 0;
       }
 
       svg {
         height: 100%;
         max-height: 100%;
+      }
+
+      .side-panel {
+        max-height: calc(100svh - 28px);
+        overflow: auto;
+      }
+
+      .desktop-intro {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .desktop-intro h1 {
+        font-size: 30px;
+        line-height: 1.05;
+      }
+
+      .desktop-intro .subtitle {
+        max-width: none;
+        font-size: 14px;
+      }
+
+      .desktop-intro .mode-tabs {
+        margin-bottom: 0;
+      }
+
+      body[data-mode="blitz"] .desktop-fallback-tabs {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .desktop-score {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 10px;
+      }
+
+      .desktop-legend {
+        display: flex;
+        padding: 0;
+        margin: 0 0 12px;
       }
     }
 
@@ -760,7 +834,7 @@
 </head>
 <body>
   <main class="page">
-    <header class="topbar">
+    <header class="topbar mobile-topbar">
       <div>
         <h1>Mini Baseball 3 на 3</h1>
         <p class="subtitle">Одна страница для первой игры на маленьком футбольном поле: поле, роли, счет, типовые розыгрыши и правила без бейсбольной бюрократии.</p>
@@ -768,7 +842,12 @@
       <button class="print" type="button" onclick="window.print()">Печать</button>
     </header>
 
-    <nav class="mode-tabs" aria-label="Режим игры">
+    <nav class="mode-tabs mobile-tabs" aria-label="Режим игры">
+      <button class="mode-tab active" type="button" data-mode="mini">Mini baseball</button>
+      <button class="mode-tab" type="button" data-mode="blitz">Blitzball</button>
+    </nav>
+
+    <nav class="mode-tabs desktop-fallback-tabs" aria-label="Режим игры">
       <button class="mode-tab active" type="button" data-mode="mini">Mini baseball</button>
       <button class="mode-tab" type="button" data-mode="blitz">Blitzball</button>
     </nav>
@@ -867,6 +946,53 @@
       </div>
 
       <aside class="side-panel">
+        <div class="desktop-intro">
+          <div>
+            <h1>Mini Baseball 3 на 3</h1>
+            <p class="subtitle">Одна страница для первой игры на маленьком футбольном поле: поле, роли, счет, типовые розыгрыши и правила без бейсбольной бюрократии.</p>
+          </div>
+          <div class="desktop-actions">
+            <nav class="mode-tabs" aria-label="Режим игры">
+              <button class="mode-tab active" type="button" data-mode="mini">Mini baseball</button>
+              <button class="mode-tab" type="button" data-mode="blitz">Blitzball</button>
+            </nav>
+            <button class="print" type="button" onclick="window.print()">Печать</button>
+          </div>
+        </div>
+
+        <div class="score-strip desktop-score" aria-live="polite">
+          <div class="score-cell">
+            <span class="score-label">Счет</span>
+            <span class="score-value score-teams"><span class="team-a">A <span data-sync="scoreA">0</span></span><span class="team-b">B <span data-sync="scoreB">0</span></span></span>
+          </div>
+          <div class="score-cell">
+            <span class="score-label">Иннинг</span>
+            <span class="score-value"><span data-sync="halfLabel">Верх</span> <span data-sync="inning">1</span></span>
+          </div>
+          <div class="score-cell">
+            <span class="score-label">Атака</span>
+            <span class="score-value">Команда <span data-sync="battingTeam">A</span></span>
+          </div>
+          <div class="score-cell">
+            <span class="score-label">Ауты</span>
+            <span class="score-value"><span data-sync="outs">0</span> / 3</span>
+          </div>
+          <div class="score-cell">
+            <span class="score-label">Подачи</span>
+            <span class="score-value"><span data-sync="strikes">0</span> страйк, <span data-sync="pitches">0</span> / 5</span>
+          </div>
+          <div class="score-cell">
+            <span class="score-label">Базы</span>
+            <span class="base-state"><span data-base="0">1</span><span data-base="1">2</span><span data-base="2">3</span></span>
+          </div>
+        </div>
+
+        <div class="legend desktop-legend">
+          <span><i class="dot red-dot"></i>атака и бегуны</span>
+          <span><i class="dot blue-dot"></i>защита</span>
+          <span><i class="dot white-dot"></i>мяч</span>
+        </div>
+
         <div class="panel-title">
           <h2>Сценарии</h2>
           <button class="ghost" type="button" id="resetDemo">Сброс</button>
@@ -1478,16 +1604,26 @@
     }
 
     function renderScore() {
-      document.getElementById('scoreA').textContent = game.score.A;
-      document.getElementById('scoreB').textContent = game.score.B;
-      document.getElementById('inning').textContent = game.inning;
-      document.getElementById('halfLabel').textContent = game.half === 'top' ? 'Верх' : 'Низ';
-      document.getElementById('battingTeam').textContent = game.batting;
-      document.getElementById('outs').textContent = game.outs;
-      document.getElementById('strikes').textContent = game.strikes;
-      document.getElementById('pitches').textContent = game.pitches;
+      setText('scoreA', game.score.A);
+      setText('scoreB', game.score.B);
+      setText('inning', game.inning);
+      setText('halfLabel', game.half === 'top' ? 'Верх' : 'Низ');
+      setText('battingTeam', game.batting);
+      setText('outs', game.outs);
+      setText('strikes', game.strikes);
+      setText('pitches', game.pitches);
       ['base1', 'base2', 'base3'].forEach((id, index) => {
         document.getElementById(id).classList.toggle('on', game.bases[index]);
+      });
+      document.querySelectorAll('[data-base]').forEach(node => {
+        node.classList.toggle('on', game.bases[Number(node.dataset.base)]);
+      });
+    }
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value;
+      document.querySelectorAll(`[data-sync="${id}"]`).forEach(node => {
+        node.textContent = value;
       });
     }
 
@@ -1595,6 +1731,7 @@
     }
 
     function setMode(mode) {
+      document.body.dataset.mode = mode;
       document.getElementById('miniMode').hidden = mode !== 'mini';
       document.getElementById('blitzMode').hidden = mode !== 'blitz';
       document.querySelectorAll('.mode-tab').forEach(button => {
@@ -1609,7 +1746,7 @@
       console.assert(scenarios.force.result.outs === 1, 'force out adds one out');
       console.assert(scenarios.forceSecond.result.outs === 1, 'force at second adds one out');
       console.assert(scenarios.runnerSecondHolds.result.bases[1], 'runner on second can hold');
-      console.assert(document.querySelectorAll('.mode-tab').length === 2, 'mode tabs exist');
+      console.assert(document.querySelectorAll('.mode-tab').length >= 2, 'mode tabs exist');
     }
 
     document.querySelectorAll('.mode-tab').forEach(button => {
