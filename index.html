@@ -475,6 +475,34 @@
       margin-bottom: 8px;
     }
 
+    .simple-rules {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .simple-rules summary {
+      cursor: pointer;
+      font-weight: 900;
+      padding: 10px 12px;
+    }
+
+    .simple-rules[open] summary {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .simple-rules ul {
+      margin: 0;
+      padding: 10px 14px 12px 28px;
+      line-height: 1.4;
+    }
+
+    .simple-rules li + li {
+      margin-top: 6px;
+    }
+
     .rule-list {
       display: grid;
       gap: 6px;
@@ -1079,6 +1107,20 @@
           <p id="scenarioText">Сценарий показывает, кто куда бежит, где мяч, что происходит со счетом, аутами, страйками и базами.</p>
           <ul class="rule-list" id="scenarioRules"></ul>
         </div>
+
+        <details class="simple-rules">
+          <summary>Правила на пальцах</summary>
+          <ul>
+            <li>Одна команда бьет, другая защищается. Потом меняетесь.</li>
+            <li>Бьющий ударил - бежит на 1 базу. Добежал - стоит там, бьет следующий.</li>
+            <li>Очко дают, когда игрок прошел 1, 2, 3 базу и вернулся домой.</li>
+            <li>Защита делает аут: ловит мяч с воздуха, приносит мяч на нужную базу раньше бегуна или выбивает бегуна между базами.</li>
+            <li>Бегун на базе в безопасности. Выбивать его можно, когда он бежит между базами.</li>
+            <li>3 аута или 5 очков - смена сторон.</li>
+            <li>Фол - это страйк. 3 страйка или 5 подач без нормального удара - аут.</li>
+            <li>Home run: мяч перелетел дальнюю линию по воздуху, все бегуны и бьющий заносят очки.</li>
+          </ul>
+        </details>
       </aside>
     </section>
 
