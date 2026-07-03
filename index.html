@@ -362,6 +362,11 @@
       font-size: 12px;
     }
 
+    .score-strip.desktop-score,
+    .legend.desktop-legend {
+      display: none;
+    }
+
     .dot {
       display: inline-block;
       width: 10px;
@@ -434,6 +439,23 @@
       box-shadow: inset 0 0 0 1px #5a8a53;
     }
 
+    .scenario-select-wrap {
+      display: none;
+      margin-bottom: 12px;
+    }
+
+    .scenario-select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 800;
+      padding: 8px 10px;
+    }
+
     .callout {
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -487,6 +509,10 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 7px;
       margin-top: 12px;
+    }
+
+    .mobile-score-tools {
+      display: none;
     }
 
     .game-tools button {
@@ -735,7 +761,7 @@
         justify-content: flex-end;
       }
 
-      .desktop-score {
+      .score-strip.desktop-score {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         border: 1px solid var(--line);
@@ -744,7 +770,7 @@
         margin-bottom: 10px;
       }
 
-      .desktop-legend {
+      .legend.desktop-legend {
         display: flex;
         padding: 0;
         margin: 0 0 12px;
@@ -785,6 +811,33 @@
       .scenario-grid,
       .game-tools {
         grid-template-columns: 1fr;
+      }
+
+      .field-panel .mobile-score-tools {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+        padding: 8px;
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .mobile-score-tools button {
+        min-height: 36px;
+        padding: 6px 4px;
+        line-height: 1.05;
+      }
+
+      .side-panel > .game-tools {
+        display: none;
+      }
+
+      .scenario-grid {
+        display: none;
+      }
+
+      .scenario-select-wrap {
+        display: block;
       }
 
       .score-strip {
@@ -881,6 +934,13 @@
             <span class="score-label">Базы</span>
             <span class="base-state"><span id="base1">1</span><span id="base2">2</span><span id="base3">3</span></span>
           </div>
+        </div>
+
+        <div class="mobile-score-tools" aria-label="Ручной счетчик">
+          <button type="button" data-action="addRun">+ очко</button>
+          <button type="button" data-action="addOut">+ аут</button>
+          <button type="button" data-action="addStrike">+ страйк</button>
+          <button type="button" data-action="switchHalf" class="primary">Смена</button>
         </div>
 
         <div class="field-wrap">
@@ -994,24 +1054,30 @@
           <span><i class="dot white-dot"></i>мяч</span>
         </div>
 
+        <div class="game-tools" aria-label="Ручной счетчик">
+          <button type="button" id="addRun" data-action="addRun">+ очко</button>
+          <button type="button" id="addOut" data-action="addOut">+ аут</button>
+          <button type="button" id="addStrike" data-action="addStrike">+ страйк</button>
+          <button type="button" id="switchHalf" data-action="switchHalf" class="primary">Смена</button>
+        </div>
+
         <div class="panel-title">
           <h2>Сценарии</h2>
           <button class="ghost" type="button" id="resetDemo">Сброс</button>
+        </div>
+
+        <div class="scenario-select-wrap">
+          <select class="scenario-select" id="scenarioSelect" aria-label="Выбор сценария">
+            <option value="">Выбери сценарий</option>
+          </select>
         </div>
 
         <div class="scenario-grid" id="scenarioButtons"></div>
 
         <div class="callout" aria-live="polite">
           <h3 id="scenarioTitle">Выбери сценарий</h3>
-          <p id="scenarioText">Кнопки показывают, кто куда бежит, где мяч, что происходит со счетом, аутами, страйками и базами.</p>
+          <p id="scenarioText">Сценарий показывает, кто куда бежит, где мяч, что происходит со счетом, аутами, страйками и базами.</p>
           <ul class="rule-list" id="scenarioRules"></ul>
-        </div>
-
-        <div class="game-tools" aria-label="Ручной счетчик">
-          <button type="button" id="addRun">+ очко</button>
-          <button type="button" id="addOut">+ аут</button>
-          <button type="button" id="addStrike">+ страйк</button>
-          <button type="button" id="switchHalf" class="primary">Смена</button>
         </div>
       </aside>
     </section>
@@ -1647,6 +1713,8 @@
         button.classList.toggle('active', button.dataset.scenario === key);
         button.disabled = true;
       });
+      document.getElementById('scenarioSelect').value = key;
+      document.getElementById('scenarioSelect').disabled = true;
       const scenario = scenarios[key];
       setScenarioText(scenario);
       applyCounts(scenario.setup);
@@ -1668,6 +1736,7 @@
           setTimeout(switchHalf, 450);
         }
         document.querySelectorAll('.scenario-grid button').forEach(button => button.disabled = false);
+        document.getElementById('scenarioSelect').disabled = false;
       }, doneAt));
     }
 
@@ -1688,8 +1757,10 @@
         button.classList.remove('active');
         button.disabled = false;
       });
+      document.getElementById('scenarioSelect').value = '';
+      document.getElementById('scenarioSelect').disabled = false;
       document.getElementById('scenarioTitle').textContent = 'Выбери сценарий';
-      document.getElementById('scenarioText').textContent = 'Кнопки показывают, кто куда бежит, где мяч, что происходит со счетом, аутами, страйками и базами.';
+      document.getElementById('scenarioText').textContent = 'Сценарий показывает, кто куда бежит, где мяч, что происходит со счетом, аутами, страйками и базами.';
       document.getElementById('scenarioRules').innerHTML = '';
     }
 
@@ -1720,13 +1791,22 @@
 
     function buildButtons() {
       const root = document.getElementById('scenarioButtons');
+      const select = document.getElementById('scenarioSelect');
       root.innerHTML = Object.entries(scenarios)
         .map(([key, scenario]) => `<button type="button" data-scenario="${key}">${scenario.label}</button>`)
+        .join('');
+      select.innerHTML = '<option value="">Выбери сценарий</option>' + Object.entries(scenarios)
+        .map(([key, scenario]) => `<option value="${key}">${scenario.label}</option>`)
         .join('');
       root.addEventListener('click', event => {
         const button = event.target.closest('button[data-scenario]');
         if (button) {
           runScenario(button.dataset.scenario);
+        }
+      });
+      select.addEventListener('change', () => {
+        if (select.value) {
+          runScenario(select.value);
         }
       });
     }
@@ -1754,10 +1834,10 @@
       button.addEventListener('click', () => setMode(button.dataset.mode));
     });
     document.getElementById('resetDemo').addEventListener('click', resetDemo);
-    document.getElementById('addRun').addEventListener('click', addRun);
-    document.getElementById('addOut').addEventListener('click', addOut);
-    document.getElementById('addStrike').addEventListener('click', addStrike);
-    document.getElementById('switchHalf').addEventListener('click', switchHalf);
+    const actions = { addRun, addOut, addStrike, switchHalf };
+    document.querySelectorAll('[data-action]').forEach(button => {
+      button.addEventListener('click', () => actions[button.dataset.action]());
+    });
 
     buildButtons();
     resetDemo();
