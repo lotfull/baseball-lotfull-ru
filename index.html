@@ -681,7 +681,8 @@
       }
 
       .game {
-        grid-template-columns: minmax(520px, 1fr) minmax(430px, 500px);
+        grid-template-columns: minmax(0, min(calc((100svh - 28px) * .7), calc(100vw - 580px))) minmax(430px, 500px);
+        justify-content: center;
         align-items: stretch;
         min-height: calc(100svh - 28px);
       }
@@ -884,9 +885,9 @@
 
         <div class="field-wrap">
           <svg id="field" viewBox="0 0 560 800" role="img" aria-label="Схема бейсбольного поля">
-            <rect class="cage" x="80" y="40" width="400" height="680" rx="10"></rect>
-            <path class="cage-net" d="M80 40 H480 M80 720 H480 M80 40 V720 M480 40 V720"></path>
-            <path class="thin-chalk" d="M80 380 H480"></path>
+            <rect class="cage" x="50" y="40" width="460" height="680" rx="10"></rect>
+            <path class="cage-net" d="M50 40 H510 M50 720 H510 M50 40 V720 M510 40 V720"></path>
+            <path class="thin-chalk" d="M50 380 H510"></path>
             <circle class="thin-chalk" cx="280" cy="380" r="58"></circle>
             <rect class="goal" x="242" y="26" width="76" height="14" rx="3"></rect>
             <rect class="goal" x="242" y="720" width="76" height="14" rx="3"></rect>
@@ -894,9 +895,9 @@
             <text class="dimension" x="512" y="380" transform="rotate(90 512 380)">60 м глубина</text>
             <text class="small-label" x="280" y="86">дальняя линия home run</text>
             <path class="thin-chalk" d="M120 105 H440"></path>
-            <path class="zone" d="M280 690 L100 125 Q280 68 460 125 Z"></path>
-            <path class="thin-chalk" d="M280 690 L100 125"></path>
-            <path class="thin-chalk" d="M280 690 L460 125"></path>
+            <path class="zone" d="M280 690 L50 439 L50 125 Q280 68 510 125 L510 439 Z"></path>
+            <path class="thin-chalk" d="M280 690 L50 439"></path>
+            <path class="thin-chalk" d="M280 690 L510 439"></path>
             <path class="chalk" d="M280 690 L390 570 L280 450 L170 570 Z"></path>
             <circle class="dirt" cx="280" cy="610" r="30"></circle>
             <circle class="dirt" cx="280" cy="690" r="34"></circle>
@@ -912,8 +913,8 @@
             <text class="label" x="280" y="408">2 база</text>
             <text class="label" x="122" y="566">3 база</text>
             <text class="small-label" x="280" y="650">питчерская точка</text>
-            <text class="small-label" x="110" y="155">фол-линия</text>
-            <text class="small-label" x="450" y="155">фол-линия</text>
+            <text class="small-label" x="95" y="428">фол-линия</text>
+            <text class="small-label" x="465" y="428">фол-линия</text>
             <text class="small-label" x="280" y="785">очередь атаки</text>
 
             <g id="batIcon" class="bat-icon" transform="translate(245 704) rotate(-28)">
