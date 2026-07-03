@@ -1,0 +1,1630 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini Baseball 3 на 3</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #182018;
+      --muted: #667266;
+      --line: #d9dfd3;
+      --paper: #f4f1e8;
+      --panel: #fffdfa;
+      --turf: #3f7a43;
+      --turf-dark: #285d35;
+      --dirt: #c9975a;
+      --chalk: #f7f5e9;
+      --blue: #255f9f;
+      --red: #b33b32;
+      --amber: #c17214;
+      --safe: #2f7d54;
+      --danger: #a83831;
+      --shadow: 0 16px 34px rgba(36, 40, 31, .1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 15px;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      min-height: 38px;
+    }
+
+    button:hover {
+      border-color: #92a98f;
+    }
+
+    button:disabled {
+      color: #9aa59a;
+      cursor: wait;
+    }
+
+    .page {
+      max-width: 1260px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      max-width: 650px;
+      margin-top: 8px;
+      line-height: 1.35;
+    }
+
+    .print {
+      padding: 10px 14px;
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .mode-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .mode-tab {
+      padding: 9px 14px;
+      font-weight: 800;
+    }
+
+    .mode-tab.active {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink);
+    }
+
+    .mode[hidden] {
+      display: none;
+    }
+
+    .game {
+      display: grid;
+      grid-template-columns: minmax(500px, .95fr) minmax(380px, .62fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .field-panel,
+    .side-panel,
+    .rules-section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .field-panel {
+      overflow: hidden;
+    }
+
+    .score-strip {
+      display: grid;
+      grid-template-columns: 1fr .92fr .94fr .68fr 1fr .78fr;
+      gap: 1px;
+      background: var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .score-cell {
+      background: #fff;
+      padding: 9px 11px;
+      min-height: 58px;
+    }
+
+    .score-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .score-value {
+      display: block;
+      margin-top: 3px;
+      font-size: 19px;
+      font-weight: 800;
+      line-height: 1.05;
+    }
+
+    .score-teams {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .team-a {
+      color: var(--red);
+    }
+
+    .team-b {
+      color: var(--blue);
+    }
+
+    .field-wrap {
+      position: relative;
+      display: grid;
+      place-items: center;
+      padding: 12px;
+      background: var(--turf);
+    }
+
+    svg {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      height: clamp(520px, 63vh, 700px);
+      border-radius: 6px;
+      background: var(--turf);
+      aspect-ratio: 7 / 10;
+    }
+
+    .zone {
+      fill: rgba(255, 255, 255, .08);
+      stroke: rgba(255, 255, 255, .35);
+      stroke-width: 2;
+    }
+
+    .dirt {
+      fill: var(--dirt);
+      stroke: rgba(65, 37, 10, .28);
+      stroke-width: 2;
+    }
+
+    .chalk {
+      stroke: var(--chalk);
+      stroke-width: 5;
+      stroke-linecap: round;
+      fill: none;
+    }
+
+    .thin-chalk {
+      stroke: rgba(247, 245, 233, .65);
+      stroke-width: 2;
+      stroke-dasharray: 8 8;
+      fill: none;
+    }
+
+    .cage {
+      fill: rgba(255, 255, 255, .04);
+      stroke: rgba(247, 245, 233, .82);
+      stroke-width: 4;
+    }
+
+    .cage-net {
+      stroke: rgba(247, 245, 233, .35);
+      stroke-width: 2;
+      stroke-dasharray: 5 7;
+      fill: none;
+    }
+
+    .goal {
+      fill: rgba(247, 245, 233, .14);
+      stroke: rgba(247, 245, 233, .82);
+      stroke-width: 3;
+    }
+
+    .dimension {
+      fill: #fff;
+      font-size: 15px;
+      font-weight: 900;
+      text-anchor: middle;
+      paint-order: stroke;
+      stroke: rgba(0, 0, 0, .28);
+      stroke-width: 3;
+    }
+
+    .base {
+      fill: var(--chalk);
+      stroke: #b9b089;
+      stroke-width: 2;
+    }
+
+    .label {
+      fill: #fff;
+      font-size: 16px;
+      font-weight: 800;
+      text-anchor: middle;
+      paint-order: stroke;
+      stroke: rgba(0, 0, 0, .25);
+      stroke-width: 3;
+    }
+
+    .small-label {
+      fill: rgba(255, 255, 255, .88);
+      font-size: 13px;
+      font-weight: 700;
+      text-anchor: middle;
+    }
+
+    .runner,
+    .fielder,
+    .bench-player,
+    .ball {
+      transition: transform .55s cubic-bezier(.2, .8, .2, 1), opacity .2s ease;
+    }
+
+    .runner circle {
+      fill: var(--red);
+      stroke: #fff;
+      stroke-width: 3;
+    }
+
+    .bench-player circle {
+      fill: var(--red);
+      opacity: .78;
+      stroke: #fff;
+      stroke-width: 3;
+    }
+
+    .fielder circle {
+      fill: var(--blue);
+      stroke: #fff;
+      stroke-width: 3;
+    }
+
+    .runner text,
+    .fielder text,
+    .bench-player text {
+      fill: #fff;
+      font-size: 13px;
+      font-weight: 900;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+
+    .ball circle {
+      fill: #fff;
+      stroke: #8a342e;
+      stroke-width: 3;
+    }
+
+    .ball path {
+      fill: none;
+      stroke: #b33b32;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .bat-icon rect {
+      fill: #8b5a2b;
+      stroke: #5f3917;
+      stroke-width: 2;
+    }
+
+    .bat-icon circle {
+      fill: #5f3917;
+    }
+
+    .hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 9px 12px 11px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: -1px;
+    }
+
+    .red-dot {
+      background: var(--red);
+    }
+
+    .blue-dot {
+      background: var(--blue);
+    }
+
+    .white-dot {
+      background: #fff;
+      border: 1px solid #b9b089;
+    }
+
+    .side-panel {
+      padding: 14px;
+      position: sticky;
+      top: 14px;
+    }
+
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .panel-title h2 {
+      font-size: 21px;
+    }
+
+    .ghost {
+      padding: 8px 10px;
+      min-height: 36px;
+    }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+      margin-bottom: 12px;
+    }
+
+    .scenario-grid button {
+      padding: 8px 10px;
+      text-align: left;
+      line-height: 1.2;
+      min-height: 36px;
+    }
+
+    .scenario-grid button.active {
+      background: #edf5ea;
+      border-color: #5a8a53;
+      box-shadow: inset 0 0 0 1px #5a8a53;
+    }
+
+    .callout {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 138px;
+      background: #fcfdfb;
+    }
+
+    .callout h3 {
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+
+    .callout p {
+      color: var(--muted);
+      line-height: 1.45;
+      margin-bottom: 8px;
+    }
+
+    .rule-list {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rule-list li {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: 8px;
+      align-items: start;
+      color: var(--ink);
+      line-height: 1.35;
+    }
+
+    .badge {
+      display: inline-grid;
+      place-items: center;
+      min-width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #edf5ea;
+      color: var(--turf-dark);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .game-tools {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 12px;
+    }
+
+    .game-tools button {
+      padding: 8px 6px;
+      line-height: 1.1;
+    }
+
+    .primary {
+      background: #21351f;
+      color: #fff;
+      border-color: #21351f;
+    }
+
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .rules-section {
+      padding: 14px;
+      box-shadow: none;
+    }
+
+    .rules-section h2 {
+      font-size: 19px;
+      margin-bottom: 10px;
+    }
+
+    .compact {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .compact li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #eef2ee;
+      padding-bottom: 6px;
+      line-height: 1.35;
+    }
+
+    .compact li:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .key {
+      color: var(--muted);
+      min-width: 96px;
+    }
+
+    .value {
+      text-align: right;
+      font-weight: 700;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 8px;
+    }
+
+    .time-row {
+      display: grid;
+      grid-template-columns: 118px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eef2ee;
+    }
+
+    .time-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .time {
+      color: var(--amber);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .sheet {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .cheat {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.4;
+      color: var(--ink);
+    }
+
+    .cheat li + li {
+      margin-top: 5px;
+    }
+
+    .mini-score {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    .mini-score th,
+    .mini-score td {
+      border: 1px solid var(--line);
+      padding: 6px;
+      text-align: center;
+    }
+
+    .mini-score th:first-child,
+    .mini-score td:first-child {
+      text-align: left;
+      font-weight: 800;
+    }
+
+    .blitz-lead {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .blitz-lead .rules-section {
+      min-height: 100%;
+    }
+
+    .source-links {
+      display: grid;
+      gap: 8px;
+      margin: 10px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .source-links a {
+      color: var(--blue);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .source-links a:hover {
+      text-decoration: underline;
+    }
+
+    .base-state {
+      display: grid;
+      grid-template-columns: repeat(3, 32px);
+      gap: 5px;
+      justify-content: start;
+      margin-top: 5px;
+    }
+
+    .base-state span {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--muted);
+      background: #fff;
+      font-weight: 900;
+    }
+
+    .base-state span.on {
+      color: #fff;
+      background: var(--safe);
+      border-color: var(--safe);
+    }
+
+    @media (min-width: 1041px) {
+      .game {
+        align-items: stretch;
+        min-height: clamp(760px, calc(100vh - 120px), 1100px);
+      }
+
+      .field-panel {
+        display: flex;
+        flex-direction: column;
+        height: clamp(760px, calc(100vh - 120px), 1100px);
+      }
+
+      .field-wrap {
+        flex: 1;
+        min-height: 0;
+      }
+
+      svg {
+        height: 100%;
+        max-height: 100%;
+      }
+    }
+
+    @media (max-width: 1040px) {
+      .game,
+      .rules,
+      .sheet,
+      .blitz-lead {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel {
+        position: static;
+      }
+
+      .score-strip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page {
+        padding: 12px;
+      }
+
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .print {
+        width: 100%;
+      }
+
+      .scenario-grid,
+      .game-tools {
+        grid-template-columns: 1fr;
+      }
+
+      .score-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .score-cell {
+        min-height: 58px;
+      }
+
+      .score-value {
+        font-size: 19px;
+      }
+
+      svg {
+        width: 100%;
+        height: auto;
+      }
+
+      .field-wrap {
+        padding: 8px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        max-width: none;
+        padding: 0;
+      }
+
+      .print,
+      .game-tools,
+      .scenario-grid {
+        display: none;
+      }
+
+      .field-panel,
+      .side-panel,
+      .rules-section {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <h1>Mini Baseball 3 на 3</h1>
+        <p class="subtitle">Одна страница для первой игры на маленьком футбольном поле: поле, роли, счет, типовые розыгрыши и правила без бейсбольной бюрократии.</p>
+      </div>
+      <button class="print" type="button" onclick="window.print()">Печать</button>
+    </header>
+
+    <nav class="mode-tabs" aria-label="Режим игры">
+      <button class="mode-tab active" type="button" data-mode="mini">Mini baseball</button>
+      <button class="mode-tab" type="button" data-mode="blitz">Blitzball</button>
+    </nav>
+
+    <div class="mode" id="miniMode">
+    <section class="game" aria-label="Интерактивная игра">
+      <div class="field-panel">
+        <div class="score-strip" aria-live="polite">
+          <div class="score-cell">
+            <span class="score-label">Счет</span>
+            <span class="score-value score-teams"><span class="team-a">A <span id="scoreA">0</span></span><span class="team-b">B <span id="scoreB">0</span></span></span>
+          </div>
+          <div class="score-cell">
+            <span class="score-label">Иннинг</span>
+            <span class="score-value"><span id="halfLabel">Верх</span> <span id="inning">1</span></span>
+          </div>
+          <div class="score-cell">
+            <span class="score-label">Атака</span>
+            <span class="score-value">Команда <span id="battingTeam">A</span></span>
+          </div>
+          <div class="score-cell">
+            <span class="score-label">Ауты</span>
+            <span class="score-value"><span id="outs">0</span> / 3</span>
+          </div>
+          <div class="score-cell">
+            <span class="score-label">Подачи</span>
+            <span class="score-value"><span id="strikes">0</span> страйк, <span id="pitches">0</span> / 5</span>
+          </div>
+          <div class="score-cell">
+            <span class="score-label">Базы</span>
+            <span class="base-state"><span id="base1">1</span><span id="base2">2</span><span id="base3">3</span></span>
+          </div>
+        </div>
+
+        <div class="field-wrap">
+          <svg id="field" viewBox="0 0 560 800" role="img" aria-label="Схема бейсбольного поля">
+            <rect class="cage" x="80" y="40" width="400" height="680" rx="10"></rect>
+            <path class="cage-net" d="M80 40 H480 M80 720 H480 M80 40 V720 M480 40 V720"></path>
+            <path class="thin-chalk" d="M80 380 H480"></path>
+            <circle class="thin-chalk" cx="280" cy="380" r="58"></circle>
+            <rect class="goal" x="242" y="26" width="76" height="14" rx="3"></rect>
+            <rect class="goal" x="242" y="720" width="76" height="14" rx="3"></rect>
+            <text class="dimension" x="280" y="30">40 м ширина</text>
+            <text class="dimension" x="512" y="380" transform="rotate(90 512 380)">60 м глубина</text>
+            <text class="small-label" x="280" y="86">дальняя линия home run</text>
+            <path class="thin-chalk" d="M120 105 H440"></path>
+            <path class="zone" d="M280 690 L100 125 Q280 68 460 125 Z"></path>
+            <path class="thin-chalk" d="M280 690 L100 125"></path>
+            <path class="thin-chalk" d="M280 690 L460 125"></path>
+            <path class="chalk" d="M280 690 L390 570 L280 450 L170 570 Z"></path>
+            <circle class="dirt" cx="280" cy="610" r="30"></circle>
+            <circle class="dirt" cx="280" cy="690" r="34"></circle>
+            <circle class="dirt" cx="390" cy="570" r="32"></circle>
+            <circle class="dirt" cx="280" cy="450" r="32"></circle>
+            <circle class="dirt" cx="170" cy="570" r="32"></circle>
+            <rect class="base" x="269" y="679" width="22" height="22" transform="rotate(45 280 690)"></rect>
+            <rect class="base" x="379" y="559" width="22" height="22" transform="rotate(45 390 570)"></rect>
+            <rect class="base" x="269" y="439" width="22" height="22" transform="rotate(45 280 450)"></rect>
+            <rect class="base" x="159" y="559" width="22" height="22" transform="rotate(45 170 570)"></rect>
+            <text class="label" x="280" y="748">дом</text>
+            <text class="label" x="438" y="566">1 база</text>
+            <text class="label" x="280" y="408">2 база</text>
+            <text class="label" x="122" y="566">3 база</text>
+            <text class="small-label" x="280" y="650">питчерская точка</text>
+            <text class="small-label" x="110" y="155">фол-линия</text>
+            <text class="small-label" x="450" y="155">фол-линия</text>
+            <text class="small-label" x="280" y="785">очередь атаки</text>
+
+            <g id="batIcon" class="bat-icon" transform="translate(245 704) rotate(-28)">
+              <rect x="-5" y="-46" width="10" height="58" rx="5"></rect>
+              <circle cx="0" cy="16" r="7"></circle>
+            </g>
+            <g id="runner3" class="runner hidden"><circle r="17"></circle><text>A1</text></g>
+            <g id="runner2" class="runner hidden"><circle r="17"></circle><text>A1</text></g>
+            <g id="runner1" class="runner hidden"><circle r="17"></circle><text>A1</text></g>
+            <g id="bench1" class="bench-player"><circle r="15"></circle><text>A2</text></g>
+            <g id="bench2" class="bench-player"><circle r="15"></circle><text>A3</text></g>
+            <g id="batter" class="runner"><circle r="18"></circle><text>A1</text></g>
+            <g id="pitcher" class="fielder"><circle r="18"></circle><text>B1</text></g>
+            <g id="infielder" class="fielder"><circle r="18"></circle><text>B2</text></g>
+            <g id="outfielder" class="fielder"><circle r="18"></circle><text>B3</text></g>
+            <g id="ball" class="ball">
+              <circle r="9"></circle>
+              <path d="M-4 -7 C-9 -2 -9 2 -4 7"></path>
+              <path d="M4 -7 C9 -2 9 2 4 7"></path>
+            </g>
+          </svg>
+        </div>
+
+        <div class="legend">
+          <span><i class="dot red-dot"></i>атака и бегуны</span>
+          <span><i class="dot blue-dot"></i>защита</span>
+          <span><i class="dot white-dot"></i>мяч</span>
+          <span>Стоп розыгрыша: мяч у подающего, бегуны стоят на базах.</span>
+        </div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="panel-title">
+          <h2>Сценарии</h2>
+          <button class="ghost" type="button" id="resetDemo">Сброс</button>
+        </div>
+
+        <div class="scenario-grid" id="scenarioButtons"></div>
+
+        <div class="callout" aria-live="polite">
+          <h3 id="scenarioTitle">Выбери сценарий</h3>
+          <p id="scenarioText">Кнопки показывают, кто куда бежит, где мяч, что происходит со счетом, аутами, страйками и базами.</p>
+          <ul class="rule-list" id="scenarioRules"></ul>
+        </div>
+
+        <div class="game-tools" aria-label="Ручной счетчик">
+          <button type="button" id="addRun">+ очко</button>
+          <button type="button" id="addOut">+ аут</button>
+          <button type="button" id="addStrike">+ страйк</button>
+          <button type="button" id="switchHalf" class="primary">Смена</button>
+        </div>
+      </aside>
+    </section>
+
+    <section class="rules" aria-label="Короткие правила">
+      <article class="rules-section">
+        <h2>План на 2 часа</h2>
+        <div class="timeline">
+          <div class="time-row"><span class="time">00:00-00:10</span><span>Разложить базы, размяться, каждому 3-5 пробных ударов.</span></div>
+          <div class="time-row"><span class="time">00:10-00:20</span><span>Учебный полуиннинг без счета: подача, удар, бег, аут, стоп.</span></div>
+          <div class="time-row"><span class="time">00:20-01:35</span><span>Основная игра: 5 иннингов или 75 минут чистой игры.</span></div>
+          <div class="time-row"><span class="time">01:35-01:50</span><span>Финальный иннинг. При ничьей начать с бегуном на 2 базе.</span></div>
+          <div class="time-row"><span class="time">01:50-02:00</span><span>Свободные удары, собрать мячи и поле.</span></div>
+        </div>
+      </article>
+
+      <article class="rules-section">
+        <h2>Настройки поля</h2>
+        <ul class="compact">
+          <li><span class="key">Манеж</span><span class="value">60 x 40 м</span></li>
+          <li><span class="key">Базы</span><span class="value">12-15 м</span></li>
+          <li><span class="key">Подающий</span><span class="value">8-10 м от дома</span></li>
+          <li><span class="key">Мяч</span><span class="value">теннисный или мягкий</span></li>
+          <li><span class="key">Бита</span><span class="value">пластиковая</span></li>
+          <li><span class="key">Фол</span><span class="value">за линиями дом-1 и дом-3</span></li>
+          <li><span class="key">Стоп</span><span class="value">мяч у подающего</span></li>
+        </ul>
+      </article>
+
+      <article class="rules-section">
+        <h2>Роли и ротация</h2>
+        <ul class="compact">
+          <li><span class="key">Атака</span><span class="value">A1 -> A2 -> A3</span></li>
+          <li><span class="key">Порядок</span><span class="value">ждут вне поля, бегун не бьет</span></li>
+          <li><span class="key">Защита</span><span class="value">P, IF, OF</span></li>
+          <li><span class="key">Подающий</span><span class="value">меняется каждый иннинг</span></li>
+          <li><span class="key">1 иннинг</span><span class="value">B1 P, B2 IF, B3 OF</span></li>
+          <li><span class="key">2 иннинг</span><span class="value">B2 P, B3 IF, B1 OF</span></li>
+          <li><span class="key">3 иннинг</span><span class="value">B3 P, B1 IF, B2 OF</span></li>
+          <li><span class="key">Подача</span><span class="value">friendly pitch</span></li>
+          <li><span class="key">Спор</span><span class="value">10 секунд, потом переигровка</span></li>
+        </ul>
+      </article>
+
+      <article class="rules-section">
+        <h2>Подачи</h2>
+        <ul class="cheat">
+          <li>У бьющего максимум 5 подач.</li>
+          <li>3 страйка = аут.</li>
+          <li>Промах = страйк.</li>
+          <li>Не ударил по нормальной подаче = страйк.</li>
+          <li>Кривая подача не считается.</li>
+          <li>Фол = страйк, но фол с двумя страйками не выбивает.</li>
+        </ul>
+      </article>
+
+      <article class="rules-section">
+        <h2>Ауты</h2>
+        <ul class="cheat">
+          <li>Поймали мяч с воздуха до касания земли - аут получает бьющий, бегуны остаются.</li>
+          <li>Форс-аут: доставили мяч на нужную базу раньше бегуна.</li>
+          <li>Осалили бегуна мячом в руке.</li>
+          <li>Попали мячом в бегуна ниже плеч.</li>
+          <li>Бегун на базе в безопасности. Выбивать броском можно, только когда он между базами.</li>
+          <li>Если есть спокойный форс-аут на 1 базе, обычно берите его. Ведущего бегуна выбивайте, только если шанс высокий.</li>
+          <li>3 аута или 5 очков заканчивают полуиннинг.</li>
+        </ul>
+      </article>
+
+      <article class="rules-section">
+        <h2>Нельзя</h2>
+        <ul class="cheat">
+          <li>Красть базы и отходить до удара.</li>
+          <li>Скользить в базу на искусственной траве.</li>
+          <li>Бросать в голову или шею.</li>
+          <li>Бить, когда кто-то стоит рядом с бьющим.</li>
+          <li>Спорить дольше 10 секунд.</li>
+        </ul>
+      </article>
+
+      <article class="rules-section sheet">
+        <div>
+          <h2>Как вести счет</h2>
+          <table class="mini-score">
+            <thead>
+              <tr><th>Команда</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>Итого</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>A</td><td>0</td><td>2</td><td>1</td><td>3</td><td>0</td><td>6</td></tr>
+              <tr><td>B</td><td>1</td><td>0</td><td>4</td><td>0</td><td>2</td><td>7</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h2>Готовый регламент</h2>
+          <ul class="cheat">
+            <li>Формат: 3 на 3, mini baseball.</li>
+            <li>Играем 5 иннингов или до 90 минут, после 90 минут новый иннинг не начинаем.</li>
+            <li>В атаке на поле только текущий бьющий и бегуны, которые уже заняли базы.</li>
+            <li>Добежал до базы - стоишь там как бегун, а бить идет следующий по порядку.</li>
+            <li>Если твоя очередь снова пришла, а ты еще на базе, вместо тебя бьет следующий свободный игрок.</li>
+            <li>Очко: бегун прошел дом -> 1 -> 2 -> 3 -> дом.</li>
+            <li>Home run: мяч перелетел дальнюю линию по воздуху в fair territory, все бегуны и бьющий доходят домой.</li>
+            <li>В каждом полуиннинге играем до 3 аутов или 5 очков.</li>
+            <li>Если мяч укатился или застрял за ограждением без явного home run, всем бегунам +1 база, бьющему 1 база.</li>
+          </ul>
+        </div>
+      </article>
+    </section>
+    </div>
+
+    <div class="mode" id="blitzMode" hidden>
+      <section class="blitz-lead" aria-label="Blitzball overview">
+        <article class="rules-section">
+          <h2>Blitzball mode</h2>
+          <ul class="cheat">
+            <li>Это более соревновательная версия: защита реально пытается кидать страйки, а не friendly pitch.</li>
+            <li>Нужна strike zone за домом: готовая рамка, стул с мишенью, сетка или прямоугольник на стене.</li>
+            <li>Для первой игры включайте этот режим только если все уже хотя бы иногда попадают по мячу.</li>
+            <li>Если подача ломает игру, возвращайтесь в Mini baseball.</li>
+          </ul>
+        </article>
+
+        <article class="rules-section">
+          <h2>Настройка для вас</h2>
+          <ul class="compact">
+            <li><span class="key">Команды</span><span class="value">3 на 3</span></li>
+            <li><span class="key">Поле</span><span class="value">тот же ромб</span></li>
+            <li><span class="key">Подающий</span><span class="value">10-12 м от дома</span></li>
+            <li><span class="key">Страйк</span><span class="value">замах или попадание в zone</span></li>
+            <li><span class="key">Walk</span><span class="value">5 balls, если хотите</span></li>
+            <li><span class="key">Лимит</span><span class="value">5 очков за полуиннинг</span></li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="rules" aria-label="Blitzball rules">
+        <article class="rules-section">
+          <h2>Подача</h2>
+          <ul class="cheat">
+            <li>Подает команда защиты.</li>
+            <li>Попал в strike zone - страйк.</li>
+            <li>Бьющий замахнулся и промахнулся - страйк.</li>
+            <li>Не попал в zone, бьющий не махнул - ball.</li>
+            <li>3 strikes = аут.</li>
+            <li>5 balls = walk на 1 базу. Для совсем первой игры можно оставить "кривую подачу перекинуть".</li>
+          </ul>
+        </article>
+
+        <article class="rules-section">
+          <h2>Битье</h2>
+          <ul class="cheat">
+            <li>Бантинг запрещен: нельзя специально тихо подставлять биту.</li>
+            <li>Фол с двумя страйками не выбивает, если вы хотите больше ударов.</li>
+            <li>Более строгий вариант: после двух страйков дать 2 фола, третий фол = аут.</li>
+            <li>Home run считайте только если мяч перелетел дальнюю линию в fair territory.</li>
+          </ul>
+        </article>
+
+        <article class="rules-section">
+          <h2>Бег по базам</h2>
+          <ul class="cheat">
+            <li>Stealing и leading off запрещены.</li>
+            <li>Бегун стартует только после удара.</li>
+            <li>Если очередь бить пришла игроку на базе, ставьте pinch runner или ghost runner.</li>
+            <li>Скольжения запрещены.</li>
+          </ul>
+        </article>
+
+        <article class="rules-section">
+          <h2>Ауты</h2>
+          <ul class="cheat">
+            <li>Поймали мяч с воздуха - аут бьющему.</li>
+            <li>Форс-аут на базе работает как в основном режиме.</li>
+            <li>Tag: защитник с мячом коснулся бегуна между базами.</li>
+            <li>Для вашей безопасности pegging лучше оставить как "ниже плеч и не в упор" или вообще запретить.</li>
+          </ul>
+        </article>
+
+        <article class="rules-section">
+          <h2>Pitcher's hand</h2>
+          <ul class="cheat">
+            <li>Опциональное blitzball-правило: питчерская точка работает как база для форс-аута.</li>
+            <li>Если мяч у подающего на точке раньше бьющего на 1 базе, бьющий аут.</li>
+            <li>Для новичков включайте это только после 1-2 иннингов, иначе будет путаница.</li>
+          </ul>
+        </article>
+
+        <article class="rules-section">
+          <h2>Когда выбирать</h2>
+          <ul class="cheat">
+            <li>Mini baseball - если цель просто побегать и понять бейсбол.</li>
+            <li>Blitzball - если хочется настоящей дуэли pitcher vs batter.</li>
+            <li>Если много walks и мало ударов, режим слишком рано включили.</li>
+          </ul>
+        </article>
+
+        <article class="rules-section sheet">
+          <div>
+            <h2>Готовый Blitzball-регламент</h2>
+            <ul class="cheat">
+              <li>3 на 3, 5 иннингов или 75 минут.</li>
+              <li>Подающий защиты кидает в strike zone.</li>
+              <li>3 strikes = аут, 5 balls = walk.</li>
+              <li>Нет stealing, leading off, bunting и sliding.</li>
+              <li>3 аута или 5 очков заканчивают полуиннинг.</li>
+              <li>Спор дольше 10 секунд = переигровка.</li>
+            </ul>
+          </div>
+          <div>
+            <h2>Источники</h2>
+            <ul class="source-links">
+              <li><a href="https://www.blitzball.com/" target="_blank" rel="noreferrer">blitzball.com</a> - официальный сайт и equipment.</li>
+              <li><a href="https://sites.google.com/view/fallsblitzball/league-rules" target="_blank" rel="noreferrer">Falls Blitzball League Rules</a> - пример league rules.</li>
+              <li><a href="https://cdn1.sportngin.com/attachments/document/4c45-3035064/9.1.23._Challenger_Blitzball_Rules__3_.pdf" target="_blank" rel="noreferrer">Challenger Blitzball Rules</a> - пример tournament rules.</li>
+              <li><a href="https://blog.gophersport.com/score-big-with-blitzball/" target="_blank" rel="noreferrer">Gopher Sport Blitzball guide</a> - PE-адаптация и distance notes.</li>
+            </ul>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const positions = {
+      home: [280, 690],
+      batterBox: [268, 718],
+      first: [390, 570],
+      second: [280, 450],
+      third: [170, 570],
+      pitcher: [280, 610],
+      infielder: [346, 515],
+      outfielder: [280, 155],
+      bench1: [218, 755],
+      bench2: [342, 755],
+      score1: [220, 690],
+      score2: [280, 735],
+      score3: [340, 690],
+      leftFoul: [98, 680],
+      rightFence: [445, 96],
+      shallow: [330, 535],
+      deep: [280, 145],
+      tagLane: [345, 510],
+      dead: [280, 610]
+    };
+
+    const nodes = {};
+    const ids = ['batter', 'runner1', 'runner2', 'runner3', 'bench1', 'bench2', 'pitcher', 'infielder', 'outfielder', 'ball'];
+    ids.forEach(id => nodes[id] = document.getElementById(id));
+
+    const game = {
+      score: { A: 0, B: 0 },
+      inning: 1,
+      half: 'top',
+      batting: 'A',
+      outs: 0,
+      strikes: 0,
+      pitches: 0,
+      bases: [false, false, false]
+    };
+
+    const scenarios = {
+      single: {
+        label: 'Single: бьющий на 1',
+        title: 'Удар по земле: бьющий добежал до 1 базы',
+        text: 'Мяч в поле. Бьющий обязан бежать на 1 базу. Защита не успела сделать форс-аут, поэтому бегун в безопасности.',
+        rules: ['Очков нет', 'Аутов нет', '1 база занята'],
+        setup: { outs: 0, strikes: 0, pitches: 1, bases: [false, false, false], scoreDelta: 0 },
+        result: { outs: 0, strikes: 0, pitches: 0, bases: [true, false, false], scoreDelta: 0 },
+        frames: [
+          [0, { batter: 'batterBox', ball: 'pitcher' }],
+          [450, { ball: 'home' }],
+          [900, { batter: 'first', ball: 'shallow', infielder: 'shallow' }],
+          [1450, { ball: 'pitcher' }]
+        ]
+      },
+      double: {
+        label: 'Double: бегуны двигаются',
+        title: 'Дальний удар: бегун с 1 идет на 3, бьющий на 2',
+        text: 'Если удар далеко, бегуны сами решают, сколько баз брать. Защита может остановить розыгрыш, вернув мяч подающему.',
+        rules: ['1 база освобождается', '2 и 3 базы заняты', 'Очков пока нет'],
+        setup: { outs: 0, strikes: 0, pitches: 1, bases: [true, false, false], scoreDelta: 0 },
+        result: { outs: 0, strikes: 0, pitches: 0, bases: [false, true, true], scoreDelta: 0 },
+        frames: [
+          [0, { batter: 'batterBox', runner1: 'first', ball: 'pitcher' }],
+          [500, { ball: 'home' }],
+          [900, { batter: 'first', runner1: 'second', ball: 'deep', outfielder: 'deep' }],
+          [1450, { batter: 'second', runner1: 'third', ball: 'pitcher' }]
+        ]
+      },
+      forceSecond: {
+        label: 'A1 на 1: форс на 2',
+        title: 'A1 обязан бежать на 2 базу',
+        text: 'Если A1 стоит на 1 базе, а A2 бьет по земле, A1 обязан освободить 1 базу для A2. Защита может выбить A1, доставив мяч на 2 базу раньше него.',
+        rules: ['A1 с 1 обязан бежать на 2', 'Мяч на 2 раньше A1 - A1 аут', 'A2 может занять 1 базу'],
+        setup: { outs: 0, strikes: 0, pitches: 1, bases: [true, false, false], scoreDelta: 0 },
+        result: { outs: 1, strikes: 0, pitches: 0, bases: [true, false, false], scoreDelta: 0 },
+        frames: [
+          [0, { batter: 'batterBox', runner1: 'first', ball: 'pitcher' }],
+          [450, { ball: 'home' }],
+          [850, { batter: 'shallow', runner1: 'tagLane', ball: 'shallow', infielder: 'shallow' }],
+          [1300, { batter: 'first', runner1: 'second', ball: 'second', infielder: 'second' }],
+          [1800, { ball: 'pitcher', runner1: 'hidden', infielder: 'infielder' }]
+        ]
+      },
+      runnerSecondHolds: {
+        label: 'A1 на 2: не обязан',
+        title: 'A1 на 2 базе не обязан бежать на 3',
+        text: 'Если 1 база пустая, A1 на 2 базе может остаться на месте. Самый простой аут для защиты обычно на A2, который обязан бежать на 1 базу.',
+        rules: ['A1 остается на 2', 'A2 обязан бежать на 1', 'Легкий аут - на 1 базе'],
+        setup: { outs: 0, strikes: 0, pitches: 1, bases: [false, true, false], scoreDelta: 0 },
+        result: { outs: 1, strikes: 0, pitches: 0, bases: [false, true, false], scoreDelta: 0 },
+        frames: [
+          [0, { batter: 'batterBox', runner2: 'second', ball: 'pitcher' }],
+          [450, { ball: 'home' }],
+          [850, { batter: 'shallow', runner2: 'second', ball: 'shallow', infielder: 'shallow' }],
+          [1300, { batter: 'first', ball: 'first', infielder: 'first' }],
+          [1800, { ball: 'pitcher', infielder: 'infielder' }]
+        ]
+      },
+      flyout: {
+        label: 'Свеча: A2 аут',
+        title: 'A2 выбили ловлей с воздуха',
+        text: 'A1 уже стоит на 1 базе. A2 ударил свечой, защитник поймал мяч до касания земли. Выбывает только A2, A1 остается на 1 базе.',
+        rules: ['+1 аут A2', 'A1 остается на 1', 'Подачи сбрасываются'],
+        setup: { outs: 0, strikes: 0, pitches: 1, bases: [true, false, false], scoreDelta: 0 },
+        result: { outs: 1, strikes: 0, pitches: 0, bases: [true, false, false], scoreDelta: 0 },
+        frames: [
+          [0, { batter: 'batterBox', runner1: 'first', ball: 'pitcher' }],
+          [450, { ball: 'home' }],
+          [900, { ball: 'deep', outfielder: 'deep' }],
+          [1400, { batter: 'batterBox', ball: 'outfielder' }]
+        ]
+      },
+      force: {
+        label: 'Форс-аут на 1',
+        title: 'Защита доставила мяч на 1 базу раньше бьющего',
+        text: 'Бьющий после удара обязан бежать на 1 базу. Если мяч оказался у защитника на 1 базе раньше него, это форс-аут.',
+        rules: ['+1 аут', 'Бьющий не занимает базу', 'Мяч возвращается подающему'],
+        setup: { outs: 0, strikes: 0, pitches: 1, bases: [false, false, false], scoreDelta: 0 },
+        result: { outs: 1, strikes: 0, pitches: 0, bases: [false, false, false], scoreDelta: 0 },
+        frames: [
+          [0, { batter: 'batterBox', ball: 'pitcher' }],
+          [450, { ball: 'home' }],
+          [850, { batter: 'shallow', ball: 'shallow', infielder: 'shallow' }],
+          [1300, { batter: 'first', ball: 'first', infielder: 'first' }],
+          [1800, { ball: 'pitcher', infielder: 'infielder' }]
+        ]
+      },
+      score: {
+        label: 'Бегун занес очко',
+        title: 'Бегун с 3 базы добежал домой',
+        text: 'Очко появляется только когда бегун проходит все базы и возвращается домой. Бьющий может в это время занять 1 базу.',
+        rules: ['+1 очко атаке', 'Бьющий на 1 базе', '3 база освобождена'],
+        setup: { outs: 1, strikes: 0, pitches: 1, bases: [false, false, true], scoreDelta: 0 },
+        result: { outs: 1, strikes: 0, pitches: 0, bases: [true, false, false], scoreDelta: 1 },
+        frames: [
+          [0, { batter: 'batterBox', runner3: 'third', ball: 'pitcher' }],
+          [450, { ball: 'home' }],
+          [900, { batter: 'first', runner3: 'home', ball: 'shallow', infielder: 'shallow' }],
+          [1450, { ball: 'pitcher' }]
+        ]
+      },
+      foul: {
+        label: 'Фол: страйк',
+        title: 'Мяч ушел за фол-линию',
+        text: 'Фол считается страйком, но фол с двумя страйками не выбивает. Для первой игры можно считать только первые два фола.',
+        rules: ['+1 страйк до счета 2', 'Бегуны остаются', 'Розыгрыш переигрывается'],
+        setup: { outs: 0, strikes: 1, pitches: 2, bases: [true, false, false], scoreDelta: 0 },
+        result: { outs: 0, strikes: 2, pitches: 3, bases: [true, false, false], scoreDelta: 0 },
+        frames: [
+          [0, { batter: 'batterBox', runner1: 'first', ball: 'pitcher' }],
+          [450, { ball: 'home' }],
+          [900, { ball: 'leftFoul' }],
+          [1400, { ball: 'pitcher' }]
+        ]
+      },
+      strikeout: {
+        label: '3 страйка: аут',
+        title: 'Третий страйк заканчивает выход бьющего',
+        text: 'Промах, нормальная подача без замаха или пятая подача без удара в поле могут закончить выход бьющего.',
+        rules: ['+1 аут', 'Страйки сбрасываются', 'Следующий бьющий по порядку'],
+        setup: { outs: 1, strikes: 2, pitches: 4, bases: [false, true, false], scoreDelta: 0 },
+        result: { outs: 2, strikes: 0, pitches: 0, bases: [false, true, false], scoreDelta: 0 },
+        frames: [
+          [0, { batter: 'batterBox', runner2: 'second', ball: 'pitcher' }],
+          [450, { ball: 'home' }],
+          [900, { ball: 'pitcher' }]
+        ]
+      },
+      peg: {
+        label: 'Выбили броском',
+        title: 'Попадание ниже плеч по бегуну между базами',
+        text: 'В wiffle/blitzball стиле можно выбивать броском, если попадание ниже плеч. В упор лучше осалить рукой.',
+        rules: ['+1 аут', 'Попадание в голову не считается', 'Сильные броски в упор запрещены'],
+        setup: { outs: 0, strikes: 0, pitches: 1, bases: [true, false, false], scoreDelta: 0 },
+        result: { outs: 1, strikes: 0, pitches: 0, bases: [false, false, false], scoreDelta: 0 },
+        frames: [
+          [0, { runner1: 'first', batter: 'batterBox', ball: 'shallow', infielder: 'shallow' }],
+          [550, { runner1: 'tagLane', ball: 'tagLane' }],
+          [1150, { ball: 'pitcher', runner1: 'tagLane' }]
+        ]
+      },
+      homeRun: {
+        label: 'Home run: 3 очка',
+        title: 'A3 выбил home run, все трое занесли очки',
+        text: 'A1 на 2 базе, A2 на 1 базе, A3 бьет мяч по воздуху за дальнюю линию в fair territory. A1, A2 и A3 доходят домой, команда получает 3 очка.',
+        rules: ['A1 домой - 1 очко', 'A2 домой - еще 1 очко', 'A3 домой - еще 1 очко'],
+        setup: { outs: 0, strikes: 0, pitches: 1, bases: [true, true, false], scoreDelta: 0 },
+        result: { outs: 0, strikes: 0, pitches: 0, bases: [false, false, false], scoreDelta: 3 },
+        frames: [
+          [0, { batter: 'batterBox', runner1: 'first', runner2: 'second', ball: 'pitcher' }],
+          [450, { ball: 'home' }],
+          [900, { batter: 'first', runner1: 'second', runner2: 'third', ball: 'rightFence', outfielder: 'deep' }],
+          [1450, { batter: 'second', runner1: 'third', runner2: 'score1' }],
+          [2000, { batter: 'third', runner1: 'score2', runner2: 'hidden' }],
+          [2550, { batter: 'score3', runner1: 'hidden', ball: 'pitcher' }]
+        ]
+      },
+      deadball: {
+        label: 'Мяч за поле: +1 база',
+        title: 'Мяч укатился или застрял за ограждением',
+        text: 'Если это не явный home run по воздуху за дальнюю линию, автоматическое правило простое: каждый бегун получает одну базу, бьющий идет на 1 базу.',
+        rules: ['Бьющий на 1', 'Бегун с 1 идет на 2', 'Бегун с 2 идет на 3'],
+        setup: { outs: 0, strikes: 0, pitches: 1, bases: [true, true, false], scoreDelta: 0 },
+        result: { outs: 0, strikes: 0, pitches: 0, bases: [true, true, true], scoreDelta: 0 },
+        frames: [
+          [0, { batter: 'batterBox', runner1: 'first', runner2: 'second', ball: 'pitcher' }],
+          [450, { ball: 'home' }],
+          [900, { ball: 'rightFence' }],
+          [1450, { batter: 'first', runner1: 'second', runner2: 'third' }],
+          [1900, { ball: 'pitcher' }]
+        ]
+      },
+      switch: {
+        label: '3 аута: смена сторон',
+        title: 'Третий аут заканчивает полуиннинг',
+        text: 'После 3 аутов команды меняются. Если был низ иннинга, начинается следующий иннинг.',
+        rules: ['Ауты сбрасываются', 'Базы очищаются', 'Атака меняется'],
+        setup: { outs: 2, strikes: 0, pitches: 1, bases: [false, false, false], scoreDelta: 0 },
+        result: { outs: 3, strikes: 0, pitches: 0, bases: [false, false, false], scoreDelta: 0, switchAfter: true },
+        frames: [
+          [0, { batter: 'batterBox', ball: 'pitcher' }],
+          [500, { ball: 'home' }],
+          [950, { ball: 'deep', outfielder: 'deep' }],
+          [1500, { ball: 'outfielder' }]
+        ]
+      }
+    };
+
+    const scenarioLabels = {
+      single: {
+        setup: { batter: 'A1' },
+        result: { runner1: 'A1', batter: 'A2' }
+      },
+      double: {
+        setup: { runner1: 'A1', batter: 'A2' },
+        result: { runner2: 'A2', runner3: 'A1', batter: 'A3' }
+      },
+      forceSecond: {
+        setup: { runner1: 'A1', batter: 'A2' },
+        result: { runner1: 'A2', batter: 'A3' }
+      },
+      runnerSecondHolds: {
+        setup: { runner2: 'A1', batter: 'A2' },
+        result: { runner2: 'A1', batter: 'A3' }
+      },
+      flyout: {
+        setup: { runner1: 'A1', batter: 'A2' },
+        result: { runner1: 'A1', batter: 'A3' }
+      },
+      force: {
+        setup: { batter: 'A1' },
+        result: { batter: 'A2' }
+      },
+      score: {
+        setup: { runner3: 'A1', batter: 'A2' },
+        result: { runner1: 'A2', batter: 'A3' }
+      },
+      foul: {
+        setup: { runner1: 'A1', batter: 'A2' },
+        result: { runner1: 'A1', batter: 'A2' }
+      },
+      strikeout: {
+        setup: { runner2: 'A1', batter: 'A2' },
+        result: { runner2: 'A1', batter: 'A3' }
+      },
+      peg: {
+        setup: { runner1: 'A1', batter: 'A2' },
+        result: { batter: 'A3' }
+      },
+      homeRun: {
+        setup: { runner1: 'A2', runner2: 'A1', batter: 'A3' },
+        result: { batter: 'A1' }
+      },
+      deadball: {
+        setup: { runner1: 'A1', runner2: 'A2', batter: 'A3' },
+        result: { runner1: 'A3', runner2: 'A1', runner3: 'A2' }
+      },
+      switch: {
+        setup: { batter: 'A1' },
+        result: { batter: 'A1' }
+      }
+    };
+
+    Object.entries(scenarioLabels).forEach(([key, labels]) => {
+      scenarios[key].setup.labels = labels.setup;
+      scenarios[key].result.labels = labels.result;
+    });
+
+    let activeTimers = [];
+
+    function point(name) {
+      const [x, y] = positions[name];
+      return `translate(${x}px, ${y}px)`;
+    }
+
+    function move(id, name) {
+      if (name === 'hidden') {
+        nodes[id].classList.add('hidden');
+        return;
+      }
+      nodes[id].style.transform = point(name);
+      nodes[id].classList.remove('hidden');
+    }
+
+    function setPlayerLabel(id, label) {
+      const text = nodes[id].querySelector('text');
+      if (text) {
+        text.textContent = label;
+      }
+    }
+
+    function setAttackLabels(labels) {
+      const used = new Set();
+      ['runner1', 'runner2', 'runner3', 'batter'].forEach(id => {
+        if (labels[id]) {
+          setPlayerLabel(id, labels[id]);
+          used.add(labels[id]);
+        } else if (id === 'batter') {
+          move(id, 'hidden');
+        }
+      });
+      const freeLabels = ['A1', 'A2', 'A3'].filter(label => !used.has(label));
+      ['bench1', 'bench2'].forEach((id, index) => {
+        if (freeLabels[index]) {
+          setPlayerLabel(id, freeLabels[index]);
+          move(id, id);
+        } else {
+          move(id, 'hidden');
+        }
+      });
+    }
+
+    function placeFromBases(bases) {
+      move('batter', 'batterBox');
+      move('pitcher', 'pitcher');
+      move('infielder', 'infielder');
+      move('outfielder', 'outfielder');
+      move('ball', 'pitcher');
+      move('runner1', bases[0] ? 'first' : 'hidden');
+      move('runner2', bases[1] ? 'second' : 'hidden');
+      move('runner3', bases[2] ? 'third' : 'hidden');
+    }
+
+    function applyCounts(next) {
+      game.outs = next.outs;
+      game.strikes = next.strikes;
+      game.pitches = next.pitches;
+      game.bases = next.bases.slice();
+      game.score[game.batting] += next.scoreDelta || 0;
+      renderScore();
+    }
+
+    function switchHalf() {
+      game.outs = 0;
+      game.strikes = 0;
+      game.pitches = 0;
+      game.bases = [false, false, false];
+      if (game.half === 'top') {
+        game.half = 'bottom';
+        game.batting = 'B';
+      } else {
+        game.half = 'top';
+        game.batting = 'A';
+        game.inning = Math.min(5, game.inning + 1);
+      }
+      renderScore();
+      placeFromBases(game.bases);
+      setAttackLabels({ batter: 'A1' });
+    }
+
+    function renderScore() {
+      document.getElementById('scoreA').textContent = game.score.A;
+      document.getElementById('scoreB').textContent = game.score.B;
+      document.getElementById('inning').textContent = game.inning;
+      document.getElementById('halfLabel').textContent = game.half === 'top' ? 'Верх' : 'Низ';
+      document.getElementById('battingTeam').textContent = game.batting;
+      document.getElementById('outs').textContent = game.outs;
+      document.getElementById('strikes').textContent = game.strikes;
+      document.getElementById('pitches').textContent = game.pitches;
+      ['base1', 'base2', 'base3'].forEach((id, index) => {
+        document.getElementById(id).classList.toggle('on', game.bases[index]);
+      });
+    }
+
+    function setScenarioText(scenario) {
+      document.getElementById('scenarioTitle').textContent = scenario.title;
+      document.getElementById('scenarioText').textContent = scenario.text;
+      document.getElementById('scenarioRules').innerHTML = scenario.rules
+        .map((rule, index) => `<li><span class="badge">${index + 1}</span><span>${rule}</span></li>`)
+        .join('');
+    }
+
+    function clearTimers() {
+      activeTimers.forEach(timer => clearTimeout(timer));
+      activeTimers = [];
+    }
+
+    function runScenario(key) {
+      clearTimers();
+      document.querySelectorAll('.scenario-grid button').forEach(button => {
+        button.classList.toggle('active', button.dataset.scenario === key);
+        button.disabled = true;
+      });
+      const scenario = scenarios[key];
+      setScenarioText(scenario);
+      applyCounts(scenario.setup);
+      placeFromBases(scenario.setup.bases);
+      setAttackLabels(scenario.setup.labels || { batter: 'A1' });
+
+      scenario.frames.forEach(([delay, moves]) => {
+        activeTimers.push(setTimeout(() => {
+          Object.entries(moves).forEach(([id, name]) => move(id, name));
+        }, delay));
+      });
+
+      const doneAt = Math.max(...scenario.frames.map(frame => frame[0])) + 650;
+      activeTimers.push(setTimeout(() => {
+        applyCounts(scenario.result);
+        placeFromBases(scenario.result.bases);
+        setAttackLabels(scenario.result.labels || { batter: 'A1' });
+        if (scenario.result.switchAfter) {
+          setTimeout(switchHalf, 450);
+        }
+        document.querySelectorAll('.scenario-grid button').forEach(button => button.disabled = false);
+      }, doneAt));
+    }
+
+    function resetDemo() {
+      clearTimers();
+      game.score = { A: 0, B: 0 };
+      game.inning = 1;
+      game.half = 'top';
+      game.batting = 'A';
+      game.outs = 0;
+      game.strikes = 0;
+      game.pitches = 0;
+      game.bases = [false, false, false];
+      renderScore();
+      placeFromBases(game.bases);
+      setAttackLabels({ batter: 'A1' });
+      document.querySelectorAll('.scenario-grid button').forEach(button => {
+        button.classList.remove('active');
+        button.disabled = false;
+      });
+      document.getElementById('scenarioTitle').textContent = 'Выбери сценарий';
+      document.getElementById('scenarioText').textContent = 'Кнопки показывают, кто куда бежит, где мяч, что происходит со счетом, аутами, страйками и базами.';
+      document.getElementById('scenarioRules').innerHTML = '';
+    }
+
+    function addRun() {
+      game.score[game.batting] += 1;
+      renderScore();
+    }
+
+    function addOut() {
+      game.outs += 1;
+      if (game.outs >= 3) {
+        switchHalf();
+      } else {
+        renderScore();
+      }
+    }
+
+    function addStrike() {
+      game.strikes += 1;
+      game.pitches += 1;
+      if (game.strikes >= 3 || game.pitches >= 5) {
+        addOut();
+        game.strikes = 0;
+        game.pitches = 0;
+      }
+      renderScore();
+    }
+
+    function buildButtons() {
+      const root = document.getElementById('scenarioButtons');
+      root.innerHTML = Object.entries(scenarios)
+        .map(([key, scenario]) => `<button type="button" data-scenario="${key}">${scenario.label}</button>`)
+        .join('');
+      root.addEventListener('click', event => {
+        const button = event.target.closest('button[data-scenario]');
+        if (button) {
+          runScenario(button.dataset.scenario);
+        }
+      });
+    }
+
+    function setMode(mode) {
+      document.getElementById('miniMode').hidden = mode !== 'mini';
+      document.getElementById('blitzMode').hidden = mode !== 'blitz';
+      document.querySelectorAll('.mode-tab').forEach(button => {
+        button.classList.toggle('active', button.dataset.mode === mode);
+      });
+    }
+
+    function selfCheck() {
+      console.assert(Object.keys(scenarios).length >= 13, 'main scenarios exist');
+      console.assert(scenarios.score.result.scoreDelta === 1, 'scoring scenario adds one run');
+      console.assert(scenarios.homeRun.result.scoreDelta === 3, 'home run adds three runs');
+      console.assert(scenarios.force.result.outs === 1, 'force out adds one out');
+      console.assert(scenarios.forceSecond.result.outs === 1, 'force at second adds one out');
+      console.assert(scenarios.runnerSecondHolds.result.bases[1], 'runner on second can hold');
+      console.assert(document.querySelectorAll('.mode-tab').length === 2, 'mode tabs exist');
+    }
+
+    document.querySelectorAll('.mode-tab').forEach(button => {
+      button.addEventListener('click', () => setMode(button.dataset.mode));
+    });
+    document.getElementById('resetDemo').addEventListener('click', resetDemo);
+    document.getElementById('addRun').addEventListener('click', addRun);
+    document.getElementById('addOut').addEventListener('click', addOut);
+    document.getElementById('addStrike').addEventListener('click', addStrike);
+    document.getElementById('switchHalf').addEventListener('click', switchHalf);
+
+    buildButtons();
+    resetDemo();
+    setMode('mini');
+    selfCheck();
+  </script>
+</body>
+</html>
